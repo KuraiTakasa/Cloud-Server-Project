@@ -39,7 +39,6 @@ You should see your instance running.
 ![Launch Instance](https://github.com/user-attachments/assets/ee471da8-8695-4258-865b-bd2e82f9d780)
 
 
-
 ### Step 2 ###
 Now we select our instance and click connect.
 
@@ -52,15 +51,39 @@ Connect using the public IP address option.
 Once in the terminal, run this. This installs Apache.
 
 ```
-#sudo apt update
-#sudo apt install apache2 -y
+sudo apt update
+sudo apt install apache2 -y
 ```
 
-![Launch Instance]()
-![Launch Instance]()
-![Launch Instance]()
-![Launch Instance]()
-![Launch Instance]()
+Now run this to enable and start Apache.
+
+```
+sudo systemctl enable apache2
+sudo systemctl start apache2
+```
+
+Now we have to allow HTTP traffic to our server. Return to the EC2 dashboard and click the Security tab. Click on the security group that you created.
+
+![Launch Instance](https://github.com/user-attachments/assets/a08301a9-c0d0-4876-ba3a-67611d309397)
+
+When you see this interface, navigate to the inbound rules tab and click the 'edit inbound rules' button.
+
+![Launch Instance](https://github.com/user-attachments/assets/caf7327b-eda4-467f-abd8-b46a7b517ae1)
+
+Click 'Add rule'.
+
+![Launch Instance](https://github.com/user-attachments/assets/e3418a65-a8b0-4974-a8ea-615e0dcd2e8a)
+
+Add the following rule and hit save.
+
+![Launch Instance](https://github.com/user-attachments/assets/56c6d7e7-346d-434c-8fd7-8adf164750f7)
+
+Now, when you search your server's public IP, you will see this.
+
+![Launch Instance](https://github.com/user-attachments/assets/e229a7a5-6f94-4518-90bb-683b36c2c797)
+
+
+### Step 3 ###
 ![Launch Instance]()
 ![Launch Instance]()
 ![Launch Instance]()
