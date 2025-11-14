@@ -84,12 +84,53 @@ Now, when you search your server's public IP, you will see this.
 
 
 ### Step 3 ###
-![Launch Instance]()
-![Launch Instance]()
-![Launch Instance]()
-![Launch Instance]()
-![Launch Instance]()
-![Launch Instance]()
+Now we install WireGuard.
+
+```
+sudo apt install wireguard -y
+```
+
+We need to enable IP forwarding. Run this first. Then, uncomment the IP forward line.
+
+```
+sudo nano /etc/sysctl.conf
+```
+
+![Launch Instance](https://github.com/user-attachments/assets/a6e5d6c0-de72-4e36-b394-44a4c0618512)
+
+Save the file and run this command.
+
+![Launch Instance](https://github.com/user-attachments/assets/9f27dbc1-61a1-4e6c-9856-f31cc4ca4bed)
+
+Now run the following command to generate a key pair for the server.
+
+![Launch Instance](https://github.com/user-attachments/assets/60f2d4b2-a31e-4d09-92c3-bcb77bdb3502)
+
+Now we take the private key we just generated and create a WireGuard config file. First, run this and copy the key. Run the second command and paste the text in the picture, replacing the private key with yours.
+
+```
+sudo cat /etc/wireguard/server_private.key
+```
+```
+sudo nano /etc/wireguard/wg0.conf
+```
+
+![Launch Instance](https://github.com/user-attachments/assets/d5325669-632b-437f-8973-0bb14fec73d9)
+
+Now run these 2 commands to start WireGuard.
+
+```
+sudo systemctl start wg-quick@wg0
+sudo systemctl enable wg-quick@wg0
+```
+
+![Launch Instance](https://github.com/user-attachments/assets/01116a76-c7fb-4086-9737-3a781f7d3f03)
+
+Lastly, we add another inbound rule in our security group.
+
+![Launch Instance](https://github.com/user-attachments/assets/57c6b0ad-56a1-4726-85af-109d493d111d)
+
+
 ![Launch Instance]()
 ![Launch Instance]()
 ![Launch Instance]()
