@@ -131,6 +131,172 @@ Lastly, we add another inbound rule in our security group.
 ![Launch Instance](https://github.com/user-attachments/assets/57c6b0ad-56a1-4726-85af-109d493d111d)
 
 
+### Step 4 ###
+Now we create 2 scripts.
+
+```
+cd /home/ubuntu/
+mkdir vpn-portal
+```
+
+Then run this command and paste the following script. This script runs a simple web server that provides a user interface for your Bash script. It serves a webpage with a form where you can enter a username. When you submit the form, this app executes the create_user.sh script with that username and then displays a download link for the newly created .conf file.
+
+```
+nano app.py
+```
+
+```
+from flask import Flask, render_template, request, send_from_directory
+import subprocess
+
+app = Flask(__name__)
+
+# Folder where .conf files are stored
+CONFIG_FOLDER = "/var/www/html"
+
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    if request.method == 'POST':
+        username = request.form.get('username')
+
+        if not username:
+            return render_template('index.html', message="Enter a username.")
+
+        # Call the create_user.sh script
+        result = subprocess.run(
+            ["/home/ubuntu/vpn-portal/create_user.sh", username],
+            capture_output=True,
+            text=True
+        )
+
+        if result.returncode != 0:
+            return render_template('index.html', message="Error creating user.")
+
+        # Extract ONLY the last line (filename)
+        conf_file = result.stdout.strip().split("\n")[-1]
+
+        return render_template('index.html', download=conf_file)
+
+    return render_template('index.html')
+
+
+@app.route('/download/<filename>')
+def download_file(filename):
+    return send_from_directory(CONFIG_FOLDER, filename, as_attachment=True)
+
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=80)
+```
+
+Now, type this command and paste the following script. This script automates the process of adding a new user to your WireGuard VPN. It takes a username as an argument, generates a new private/public key pair for them, adds their public key as a new [Peer] to the main wg0.conf server file, and then creates a separate client config file (e.g., user.conf) in the /var/www/html directory for the user to download.
+
+```
+nano create_user.sh
+```
+
+```
+#!/bin/bash
+
+# Username passed from Flask
+USERNAME=$1
+
+# Directories
+WG_DIR="/etc/wireguard"
+WG_CONF="$WG_DIR/wg0.conf"
+WWW_DIR="/var/www/html"
+
+# Your actual EC2 public IP
+ENDPOINT_IP="13.127.91.166"
+
+# Generate private and public keys
+wg genkey | tee /tmp/${USERNAME}_privatekey | wg pubkey > /tmp/${USERNAME}_publickey
+PRIVATE_KEY=$(cat /tmp/${USERNAME}_privatekey)
+PUBLIC_KEY=$(cat /tmp/${USERNAME}_publickey)
+
+# Generate a random client IP in the 10.0.0.x range
+IP="10.0.0.$((100 + RANDOM % 100))"
+
+# Add peer to server config if not already present
+if ! grep -q "$PUBLIC_KEY" $WG_CONF; then
+cat <<EOF | sudo tee -a $WG_CONF
+
+[Peer]
+# $USERNAME
+PublicKey = $PUBLIC_KEY
+AllowedIPs = $IP/32
+EOF
+fi
+
+# Create the client config file
+cat <<EOF > $WWW_DIR/${USERNAME}.conf
+[Interface]
+PrivateKey = $PRIVATE_KEY
+Address = $IP/32
+DNS = 1.1.1.1
+
+[Peer]
+PublicKey = $(sudo wg show wg0 public-key)
+Endpoint = ${ENDPOINT_IP}:51820
+AllowedIPs = 0.0.0.0/0
+PersistentKeepalive = 25
+EOF
+
+# Apply updated WireGuard configuration immediately
+sudo wg addconf wg0 <(wg-quick strip wg0)
+
+# Output ONLY the config filename so Flask can detect it
+echo "${USERNAME}.conf"
+```
+
+Now we make a simple HTML webpage.
+
+```
+mkdir template
+nano index.html
+```
+
+```
+<!DOCTYPE html>
+<html>
+<head>
+  <title>WireGuard VPN Portal</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; background: #fafafa; }
+    input, button { padding: 8px; margin: 6px; }
+  </style>
+</head>
+<body>
+  <h2>Connect to Aamir's VPN</h2>
+  <form method="post">
+    <input type="text" name="username" placeholder="Username" required>
+    <input type="password" name="password" placeholder="Password (optional)">
+    <button type="submit">Generate VPN Config</button>
+  </form>
+  {% if message %}
+    <p style="color:red;">{{ message }}</p>
+  {% endif %}
+  {% if download %}
+    <p>Your config file is ready: <a href="/download/{{ download }}">Download {{ download }}</a></p>
+  {% endif %}
+</body>
+</html>
+```
+
+We need to ensure that Python is installed and Apache is temporarily disabled.
+
+```
+sudo apt install python3-pip -y
+sudo apt install python3-flask -y
+sudo systemctl stop apache2
+sudo systemctl disable apache2
+```
+
+Now, for the website to work, you need to run the .py file through Python.
+
+```
+sudo python3 /home/ubuntu/vpn-portal/app.py
+```
 ![Launch Instance]()
 ![Launch Instance]()
 ![Launch Instance]()
