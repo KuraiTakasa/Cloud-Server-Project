@@ -297,13 +297,6 @@ Now, for the website to work, you need to run the .py file through Python.
 ```
 sudo python3 /home/ubuntu/vpn-portal/app.py
 ```
-![Launch Instance]()
-![Launch Instance]()
-![Launch Instance]()
-![Launch Instance]()
-![Launch Instance]()
-![Launch Instance]()
-![Launch Instance]()
-![Launch Instance]()
-![Launch Instance]()
-![Launch Instance]()
+
+## User Guide ##
+You need to have WireGuard installed. Type a username into the website prompt and, optionally, a password. Once the configuration file is generated, add it to your WireGuard application using the 'Add Tunnel' option. Then, simply press 'Activate' and go to whatismyip.com to confirm the connection has been established.
